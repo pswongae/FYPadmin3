@@ -1,10 +1,10 @@
-angular.module('mainApp', ['ui.router', 'ngStorage', 'datatables', 'ui.bootstrap'])
-.config(function($stateProvider, $urlRouterProvider){
+angular.module('mainApp', ['ui.router', 'ngStorage', 'datatables', 'ui.bootstrap', 'ngResource', 'lbServices'])
+.config(function($stateProvider, $urlRouterProvider, LoopBackResourceProvider){
     $urlRouterProvider.otherwise('/login');
     $stateProvider
     .state('login', {
         url: '/login',
-        params: {msg: {}},
+        params: {danger:{}, msg:{}},
         templateUrl: 'templates/login.html',
         controller: 'loginCtrl'
     })
@@ -37,7 +37,11 @@ angular.module('mainApp', ['ui.router', 'ngStorage', 'datatables', 'ui.bootstrap
             url: '/upload',
             templateUrl: 'templates/uploadExcel.html',
             controller: 'uploadCtrl'
-        })
+        });
+    // Use a custom auth header instead of the default 'Authorization'
+    LoopBackResourceProvider.setAuthHeader('X-Access-Token');
+    // Change the URL where to access the LoopBack REST API server
+    LoopBackResourceProvider.setUrlBase('http://ridesharingfyp.ddns.net:3000/api');
 
 })
 .run(function($rootScope, $state, $localStorage) {
@@ -54,34 +58,38 @@ angular.module('mainApp', ['ui.router', 'ngStorage', 'datatables', 'ui.bootstrap
 
 // Controllers
 
-.controller('loginCtrl', function($scope, $state, $localStorage, $stateParams){
+.controller('loginCtrl', function($scope, $state, $localStorage, $stateParams, Admin){
 
     $localStorage.accessToken = null;
     $scope.alertInfo = $stateParams;
 
     $scope.login = function(data){
         if (data && data.username && data.password){
-            if (true){
-                $localStorage.accessToken = 12345;
+            Admin.login(data, function(value, responseheaders){
+                $localStorage.accessToken = value.id;
                 $state.go('home');
-            } else{
-                $state.go('login', {msg: 'Incorrect Username or Password!'});
-            }
+            }, function(error){
+                $state.go('login', {danger: true, msg: (error.data? 'Incorrect Username or Password': 'No response from the Admin Panel!')});
+            });
         }
     };
 
 })
-.controller('homeCtrl', function($scope, $state, $localStorage){
+.controller('homeCtrl', function($scope, $state, $localStorage, Admin){
 
     $scope.loginCheck = function(){
         if (!$localStorage.accessToken){
-            $state.go('login', {msg: 'You are required to login before accessing the page!'});
+            $state.go('login', {danger: true, msg: 'You are required to login before accessing the page.'});
         }
     };
 
     $scope.logout = function(){
-        $localStorage.accessToken = null;
-        $state.go('login');
+        Admin.logout({}, function(value, responseheaders){
+            $localStorage.accessToken = null;
+            $state.go('login', {danger: false, msg: 'You have successfully logged out of the Admin Panel.'});
+        }, function(error){
+            $state.go('login', {danger: true, msg: (error.data? error.data.error.message: 'No response from the Admin Panel!')});
+        });
     };
 
 })

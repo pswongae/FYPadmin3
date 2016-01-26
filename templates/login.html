@@ -4,7 +4,7 @@
             <div class="text-center">
                 <br><h3>RideSharing 2.0 Admin Panel</h3>
             </div>
-            <div ng-show="alertInfo.msg.length >= 0" class="alert alert-danger">
+            <div ng-show="alertInfo.msg.length >= 0" ng-class="{'alert alert-danger': alertInfo.danger, 'alert alert-success': !alertInfo.danger}">
                 <strong>{{ alertInfo.msg }}</strong>
             </div>
             <div class="panel panel-success">
