@@ -1,0 +1,107 @@
+{
+  "name": "angular-datatables",
+  "version": "0.5.2",
+  "author": {
+    "name": "l-lin"
+  },
+  "main": "index.js",
+  "ignore": [
+    ".bowerrc",
+    ".editorconfig",
+    ".git*",
+    ".jshintrc",
+    ".esformatter",
+    "Gruntfile.js",
+    "test",
+    "src",
+    ".travis.yml",
+    "vendor",
+    "data.json",
+    "data1.json",
+    "demo",
+    "favicon.png",
+    "index.html",
+    "README.md",
+    "CONTRIBUTING.md",
+    "server.js",
+    "styles",
+    "_config.yml",
+    "grunt",
+    "images",
+    "bower.json",
+    "archives",
+    "archives.json",
+    "dtOptions.json",
+    "dtColumns.json"
+  ],
+  "dependencies": {
+    "angular": ">=1.3.0",
+    "jquery": ">=1.11.0",
+    "datatables": ">=1.10.0"
+  },
+  "devDependencies": {
+    "grunt": "~0.4.1",
+    "grunt-express": "1.4.1",
+    "grunt-contrib-watch": "~0.5.2",
+    "grunt-contrib-clean": "0.5.0",
+    "grunt-contrib-concat": "~0.3.0",
+    "grunt-contrib-cssmin": "~0.7.0",
+    "grunt-contrib-jshint": "~0.7.1",
+    "grunt-contrib-uglify": "~0.6.0",
+    "grunt-wrap": "~0.3.0",
+    "grunt-jsbeautifier": "~0.2.2",
+    "grunt-angular-templates": "~0.5.1",
+    "grunt-ng-annotate": "~0.8.0",
+    "express": "~4.10.1",
+    "body-parser": "~1.8.1",
+    "load-grunt-config": "~0.7.2",
+    "jshint-stylish": "~0.1.3",
+    "load-grunt-tasks": "~0.2.0",
+    "time-grunt": "~0.2.0",
+    "karma-ng-scenario": "~0.1.0",
+    "grunt-karma": "~0.6.2",
+    "karma-script-launcher": "~0.1.0",
+    "karma-firefox-launcher": "~0.1.2",
+    "karma-chrome-launcher": "~0.1.0",
+    "karma-html2js-preprocessor": "~0.1.0",
+    "karma-jasmine": "~0.1.4",
+    "karma-phantomjs-launcher": "~0.1.0",
+    "karma": "~0.10.8",
+    "karma-ng-html2js-preprocessor": "~0.1.0"
+  },
+  "engines": {
+    "node": ">=0.8.0"
+  },
+  "scripts": {
+    "test": "grunt test",
+    "start": "node server.js"
+  },
+  "gitHead": "1da93ace068e35a297378ce3f82a803f25604609",
+  "description": "angular-datatables [![Build Status](https://travis-ci.org/l-lin/angular-datatables.png?branch=master)](https://travis-ci.org/l-lin/angular-datatables) [![Built with Grunt](https://cdn.gruntjs.com/builtwith.png)](http://gruntjs.com/) [![Stories in Ready](h",
+  "_id": "angular-datatables@0.5.2",
+  "_shasum": "89034f5f29db345cbc05617f07345db4fbf36414",
+  "_from": "angular-datatables@*",
+  "_npmVersion": "2.7.4",
+  "_nodeVersion": "0.10.33",
+  "_npmUser": {
+    "name": "l-lin",
+    "email": "louis.lin.87@gmail.com"
+  },
+  "dist": {
+    "shasum": "89034f5f29db345cbc05617f07345db4fbf36414",
+    "tarball": "http://registry.npmjs.org/angular-datatables/-/angular-datatables-0.5.2.tgz"
+  },
+  "maintainers": [
+    {
+      "name": "aaronroberson",
+      "email": "aaronaroberson@gmail.com"
+    },
+    {
+      "name": "l-lin",
+      "email": "louis.lin.87@gmail.com"
+    }
+  ],
+  "directories": {},
+  "_resolved": "https://registry.npmjs.org/angular-datatables/-/angular-datatables-0.5.2.tgz",
+  "readme": "ERROR: No README data found!"
+}
