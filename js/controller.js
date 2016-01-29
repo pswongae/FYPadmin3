@@ -51,7 +51,7 @@ angular.module('mainApp', ['ui.router', 'ngStorage', 'datatables', 'ui.bootstrap
             $state.go('.dashboard');
         }
     });
-    $rootScope.dashboardListener = null;
+    $rootScope.src = new EventSource(API_BASE+'/Dashboards/change-stream?_format=event-stream');
     $localStorage.$default({
         accessToken: null
     });
@@ -104,63 +104,64 @@ angular.module('mainApp', ['ui.router', 'ngStorage', 'datatables', 'ui.bootstrap
     //     {type:'Request', username:'user5', time:'1 hour ago', from:'Sai Kung', to:'HKUST'},
     // ];
 
-    if ($rootScope.dashboardListener == null){
-        var src = new EventSource(API_BASE+'/Dashboards/change-stream?_format=event-stream');
-        $rootScope.dashboardListener = src.addEventListener('data', function(msg) {
-            var data = JSON.parse(msg.data).data;
-            $scope.updateDashboard(data);
-        });
+    $rootScope.src.removeEventListener('data', $rootScope.dashboardUpdate);
+    $rootScope.dashboardUpdate = function(value) {
+        var data = JSON.parse(value.data).data;
+        $scope.$apply($scope.updateDashboard(data));
     }
+    $rootScope.src.addEventListener('data', $rootScope.dashboardUpdate);
 
     $scope.updateDashboard = function(data){
-        console.log(data);
-        $scope.$apply(function(){
-            if (data.memCount != null){
-                $scope.memCount = data.memCount;
-            }
-            if (data.rideCount != null){
-                $scope.rideCount = data.rideCount;
-            }
-            if (data.requestCount != null){
-                $scope.requestCount = data.requestCount;
-            }
-            if (data.joinCount != null){
-                $scope.joinCount = data.joinCount;
-            }
-            if (data.pastOffers != null && data.pastRequests != null){
-                $scope.updateOfferRequestChart(data.pastOffers, data.pastRequests);
-            }
-            if ((data.driverCount != null && $scope.driverCount != data.driverCount) || 
-                (data.passengerCount != null && $scope.passengerCount != data.passengerCount)){
-                $scope.driverCount = data.driverCount;
-                $scope.passengerCount = data.passengerCount;
-                $scope.usersData = [
-                    {value: $scope.driverCount, label: "Drivers"},
-                    {value: $scope.passengerCount, label: "Passengers"},
-                ];
-                $scope.charts[1].setData($scope.usersData);
-            }
-            if ((data.maleCount != null && $scope.maleCount != data.maleCount) || 
-                (data.femaleCount != null && $scope.femaleCount != data.femaleCount)){
-                $scope.maleCount = data.maleCount;
-                $scope.femaleCount = data.femaleCount;
-                $scope.users2Data = [
-                    {value: $scope.maleCount, label: "Male"},
-                    {value: $scope.femaleCount, label: "Female"},
-                ];
-                $scope.charts[2].setData($scope.users2Data);
-            }
-            $scope.totalMemCount = $scope.maleCount + $scope.femaleCount;
-        });
+        // console.log(data);
+        if (data.memCount != null){
+            $scope.memCount = data.memCount;
+        }
+        if (data.rideCount != null){
+            $scope.rideCount = data.rideCount;
+        }
+        if (data.requestCount != null){
+            $scope.requestCount = data.requestCount;
+        }
+        if (data.joinCount != null){
+            $scope.joinCount = data.joinCount;
+        }
+        if (data.pastOffers != null && data.pastRequests != null){
+            $scope.updateOfferRequestChart(data.pastOffers, data.pastRequests);
+        }
+        if ((data.driverCount != null && $scope.driverCount != data.driverCount) || 
+            (data.passengerCount != null && $scope.passengerCount != data.passengerCount)){
+            $scope.driverCount = data.driverCount;
+            $scope.passengerCount = data.passengerCount;
+            $scope.usersData = [
+                {value: $scope.driverCount, label: "Drivers"},
+                {value: $scope.passengerCount, label: "Passengers"},
+            ];
+            $scope.charts[1].setData($scope.usersData);
+        }
+        if ((data.maleCount != null && $scope.maleCount != data.maleCount) || 
+            (data.femaleCount != null && $scope.femaleCount != data.femaleCount)){
+            $scope.maleCount = data.maleCount;
+            $scope.femaleCount = data.femaleCount;
+            $scope.users2Data = [
+                {value: $scope.maleCount, label: "Male"},
+                {value: $scope.femaleCount, label: "Female"},
+            ];
+            $scope.charts[2].setData($scope.users2Data);
+        }
+        $scope.totalMemCount = $scope.maleCount + $scope.femaleCount;
     };
 
     $scope.updateOfferRequestChart = function(pastOffers, pastRequests){
         var equal = true;
-        for (var i=0; i<7; i++){
-            if ($scope.pastOffers[i] != pastOffers[i] || $scope.pastRequests[i] != pastRequests[i]){
-                equal = false;
-                break;
-            }
+        if ($scope.pastOffers == null || $scope.pastRequests == null){
+            $scope.createCharts();
+            equal = false;
+        } else{
+            equal = $scope.pastOffers.every(function(element, index){
+                    return element === pastOffers[index];
+                }) && $scope.pastRequests.every(function(element, index){
+                    return element === pastRequests[index];
+                });
         }
         if (!equal){
             $scope.offerRequestData = [];
@@ -176,14 +177,22 @@ angular.module('mainApp', ['ui.router', 'ngStorage', 'datatables', 'ui.bootstrap
                     "Request": $scope.pastRequests[7-i]
                 });
             }
-            console.log($scope.offerRequestData);
             $scope.charts[0].setData($scope.offerRequestData);
         }
     }
 
     $scope.createCharts = function(offerRequestData, usersData, users2Data){
-        var charts = [];
-        charts.push(
+        if (offerRequestData == null || offerRequestData.length <= 0){
+            offerRequestData = [{Date: '', Offer: 0, Request: 0}];
+        }
+        if (usersData == null){
+            usersData = [{label: '', value: 0}];
+        }
+        if (users2Data == null){
+            users2Data = [{label: '', value: 0}];
+        }
+        $scope.charts = [];
+        $scope.charts.push(
             Morris.Bar({
                 element: 'offerRequestChart',
                 data: offerRequestData,
@@ -195,7 +204,7 @@ angular.module('mainApp', ['ui.router', 'ngStorage', 'datatables', 'ui.bootstrap
                 resize: true
             })
         );
-        charts.push(
+        $scope.charts.push(
             Morris.Donut({
                 element: 'usersChart',
                 data: usersData,
@@ -203,7 +212,7 @@ angular.module('mainApp', ['ui.router', 'ngStorage', 'datatables', 'ui.bootstrap
                 resize: true
             })//.select(0);
         );
-        charts.push(
+        $scope.charts.push(
             Morris.Donut({
                 element: 'users2Chart',
                 data: users2Data,
@@ -211,47 +220,10 @@ angular.module('mainApp', ['ui.router', 'ngStorage', 'datatables', 'ui.bootstrap
                 resize: true
             })
         );
-        return charts;
     };
 
     Admin.adminDashBoard(function(value, responseheaders){
-        var data = value.status;
-        if (data){
-            $scope.memCount = data.memCount;
-            $scope.rideCount = data.rideCount;
-            $scope.requestCount = data.requestCount;
-            $scope.joinCount = data.joinCount;
-            $scope.totalMemCount = data.maleCount + data.femaleCount;
-            $scope.passengerCount = data.passengerCount;
-            $scope.driverCount = data.driverCount;
-            $scope.maleCount = data.maleCount;
-            $scope.femaleCount = data.femaleCount;
-            $scope.offerRequestData = [];
-            $scope.pastOffers = [];
-            $scope.pastRequests = [];
-            var today = new Date();
-            var oneDay = 24*60*60*1000;
-            for (var i=7; i>0; i--){
-                var currDay = new Date(today-i*oneDay);
-                var nextDay = new Date(currDay.getTime()+oneDay);
-                $scope.pastOffers.push(data[currDay.getDate()+"between_rideCount"+nextDay.getDate()]);
-                $scope.pastRequests.push(data[currDay.getDate()+"between_requestCount"+nextDay.getDate()]);
-                $scope.offerRequestData.push({
-                    "Date": currDay.getDate()+"/"+(currDay.getMonth()+1),
-                    "Offer": $scope.pastOffers[$scope.pastOffers.length-1],
-                    "Request": $scope.pastRequests[$scope.pastRequests.length-1]
-                });
-            }
-            $scope.usersData = [
-                {value: $scope.driverCount, label: "Drivers"},
-                {value: $scope.passengerCount, label: "Passengers"},
-            ];
-            $scope.users2Data = [
-                {value: $scope.maleCount, label: "Male"},
-                {value: $scope.femaleCount, label: "Female"},
-            ];
-            $scope.charts = $scope.createCharts($scope.offerRequestData, $scope.usersData, $scope.users2Data);
-        } else{
+        if (!value.status){
             $state.go('login', {danger: true, msg: 'You are required to login before accessing the page.'});
         }
     }, function(error){
