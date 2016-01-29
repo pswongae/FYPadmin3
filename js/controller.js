@@ -1,3 +1,4 @@
+var API_BASE = 'http://ridesharingfyp.ddns.net:3000/api';
 angular.module('mainApp', ['ui.router', 'ngStorage', 'datatables', 'ui.bootstrap', 'ngResource', 'lbServices'])
 .config(function($stateProvider, $urlRouterProvider, LoopBackResourceProvider){
     $urlRouterProvider.otherwise('/login');
@@ -41,7 +42,7 @@ angular.module('mainApp', ['ui.router', 'ngStorage', 'datatables', 'ui.bootstrap
     // Use a custom auth header instead of the default 'Authorization'
     LoopBackResourceProvider.setAuthHeader('X-Access-Token');
     // Change the URL where to access the LoopBack REST API server
-    LoopBackResourceProvider.setUrlBase('http://ridesharingfyp.ddns.net:3000/api');
+    LoopBackResourceProvider.setUrlBase(API_BASE);
 
 })
 .run(function($rootScope, $state, $localStorage) {
@@ -50,10 +51,10 @@ angular.module('mainApp', ['ui.router', 'ngStorage', 'datatables', 'ui.bootstrap
             $state.go('.dashboard');
         }
     });
+    $rootScope.dashboardListener = null;
     $localStorage.$default({
         accessToken: null
     });
-
 })
 
 // Controllers
@@ -93,62 +94,168 @@ angular.module('mainApp', ['ui.router', 'ngStorage', 'datatables', 'ui.bootstrap
     };
 
 })
-.controller('dashboardCtrl', function($scope){
+.controller('dashboardCtrl', function($scope, $state, $rootScope, Admin){
 
-    // Timeline
-    $scope.events = [
-        {type:'Offer', username:'user4', time:'11 mins ago', from:'HKUST', to:'Choi Hung'},
-        {type:'Request', username:'user7', time:'23 mins ago', from:'Hang Hau', to:'HKUST'},
-        {type:'Request', username:'user12', time:'47 mins ago', from:'HKUST', to:'Choi Hung'},
-        {type:'Offer', username:'user2', time:'1 hour ago', from:'HKUST', to:'Hang Hau'},
-        {type:'Request', username:'user5', time:'1 hour ago', from:'Sai Kung', to:'HKUST'},
-    ];
+    // $scope.events = [
+    //     {type:'Offer', username:'user4', time:'11 mins ago', from:'HKUST', to:'Choi Hung'},
+    //     {type:'Request', username:'user7', time:'23 mins ago', from:'Hang Hau', to:'HKUST'},
+    //     {type:'Request', username:'user12', time:'47 mins ago', from:'HKUST', to:'Choi Hung'},
+    //     {type:'Offer', username:'user2', time:'1 hour ago', from:'HKUST', to:'Hang Hau'},
+    //     {type:'Request', username:'user5', time:'1 hour ago', from:'Sai Kung', to:'HKUST'},
+    // ];
 
-    // Bar Chart
-    $scope.offerRequestData = [
-        {Date: "18/10", Offer: 34, Request: 66},
-        {Date: "19/10", Offer: 23, Request: 49},
-        {Date: "20/10", Offer: 38, Request: 53},
-        {Date: "21/10", Offer: 42, Request: 48},
-        {Date: "22/10", Offer: 38, Request: 52},
-        {Date: "23/10", Offer: 27, Request: 36},
-        {Date: "24/10", Offer: 34, Request: 51},
-    ];
+    if ($rootScope.dashboardListener == null){
+        var src = new EventSource(API_BASE+'/Dashboards/change-stream?_format=event-stream');
+        $rootScope.dashboardListener = src.addEventListener('data', function(msg) {
+            var data = JSON.parse(msg.data).data;
+            $scope.updateDashboard(data);
+        });
+    }
 
-    Morris.Bar({
-        element: 'offerRequestChart',
-        data: $scope.offerRequestData,
-        xkey: 'Date',
-        ykeys: ['Offer', 'Request'],
-        labels: ['Offer', 'Request'],
-        hideHover: 'auto',
-        smooth: false,
-        resize: true
-    });
+    $scope.updateDashboard = function(data){
+        console.log(data);
+        $scope.$apply(function(){
+            if (data.memCount != null){
+                $scope.memCount = data.memCount;
+            }
+            if (data.rideCount != null){
+                $scope.rideCount = data.rideCount;
+            }
+            if (data.requestCount != null){
+                $scope.requestCount = data.requestCount;
+            }
+            if (data.joinCount != null){
+                $scope.joinCount = data.joinCount;
+            }
+            if (data.pastOffers != null && data.pastRequests != null){
+                $scope.updateOfferRequestChart(data.pastOffers, data.pastRequests);
+            }
+            if ((data.driverCount != null && $scope.driverCount != data.driverCount) || 
+                (data.passengerCount != null && $scope.passengerCount != data.passengerCount)){
+                $scope.driverCount = data.driverCount;
+                $scope.passengerCount = data.passengerCount;
+                $scope.usersData = [
+                    {value: $scope.driverCount, label: "Drivers"},
+                    {value: $scope.passengerCount, label: "Passengers"},
+                ];
+                $scope.charts[1].setData($scope.usersData);
+            }
+            if ((data.maleCount != null && $scope.maleCount != data.maleCount) || 
+                (data.femaleCount != null && $scope.femaleCount != data.femaleCount)){
+                $scope.maleCount = data.maleCount;
+                $scope.femaleCount = data.femaleCount;
+                $scope.users2Data = [
+                    {value: $scope.maleCount, label: "Male"},
+                    {value: $scope.femaleCount, label: "Female"},
+                ];
+                $scope.charts[2].setData($scope.users2Data);
+            }
+            $scope.totalMemCount = $scope.maleCount + $scope.femaleCount;
+        });
+    };
 
-    // Donut Chart
-    $scope.usersData = [
-        {value: 125, label: "Drivers"},
-        {value: 256, label: "Passengers"},
-    ];
+    $scope.updateOfferRequestChart = function(pastOffers, pastRequests){
+        var equal = true;
+        for (var i=0; i<7; i++){
+            if ($scope.pastOffers[i] != pastOffers[i] || $scope.pastRequests[i] != pastRequests[i]){
+                equal = false;
+                break;
+            }
+        }
+        if (!equal){
+            $scope.offerRequestData = [];
+            $scope.pastOffers = pastOffers;
+            $scope.pastRequests = pastRequests;
+            var today = new Date();
+            var oneDay = 24*60*60*1000;
+            for (var i=7; i>0; i--){
+                var currDay = new Date(today-i*oneDay);
+                $scope.offerRequestData.push({
+                    "Date": currDay.getDate()+"/"+(currDay.getMonth()+1),
+                    "Offer": $scope.pastOffers[7-i],
+                    "Request": $scope.pastRequests[7-i]
+                });
+            }
+            console.log($scope.offerRequestData);
+            $scope.charts[0].setData($scope.offerRequestData);
+        }
+    }
 
-    Morris.Donut({
-        element: 'usersChart',
-        data: $scope.usersData,
-        colors: ['#0ba462', '#337ab7'],
-        resize: true
-    }).select(0);
+    $scope.createCharts = function(offerRequestData, usersData, users2Data){
+        var charts = [];
+        charts.push(
+            Morris.Bar({
+                element: 'offerRequestChart',
+                data: offerRequestData,
+                xkey: 'Date',
+                ykeys: ['Offer', 'Request'],
+                labels: ['Offer', 'Request'],
+                hideHover: 'auto',
+                smooth: false,
+                resize: true
+            })
+        );
+        charts.push(
+            Morris.Donut({
+                element: 'usersChart',
+                data: usersData,
+                colors: ['#0ba462', '#337ab7'],
+                resize: true
+            })//.select(0);
+        );
+        charts.push(
+            Morris.Donut({
+                element: 'users2Chart',
+                data: users2Data,
+                colors: ['#337ab7', '#d9534f'],
+                resize: true
+            })
+        );
+        return charts;
+    };
 
-    $scope.users2Data = [
-        {value: 220, label: "Male"},
-        {value: 161, label: "Female"},
-    ];
-
-    Morris.Donut({
-        element: 'users2Chart',
-        data: $scope.users2Data,
-        colors: ['#337ab7', '#d9534f'],
-        resize: true
+    Admin.adminDashBoard(function(value, responseheaders){
+        var data = value.status;
+        if (data){
+            $scope.memCount = data.memCount;
+            $scope.rideCount = data.rideCount;
+            $scope.requestCount = data.requestCount;
+            $scope.joinCount = data.joinCount;
+            $scope.totalMemCount = data.maleCount + data.femaleCount;
+            $scope.passengerCount = data.passengerCount;
+            $scope.driverCount = data.driverCount;
+            $scope.maleCount = data.maleCount;
+            $scope.femaleCount = data.femaleCount;
+            $scope.offerRequestData = [];
+            $scope.pastOffers = [];
+            $scope.pastRequests = [];
+            var today = new Date();
+            var oneDay = 24*60*60*1000;
+            for (var i=7; i>0; i--){
+                var currDay = new Date(today-i*oneDay);
+                var nextDay = new Date(currDay.getTime()+oneDay);
+                $scope.pastOffers.push(data[currDay.getDate()+"between_rideCount"+nextDay.getDate()]);
+                $scope.pastRequests.push(data[currDay.getDate()+"between_requestCount"+nextDay.getDate()]);
+                $scope.offerRequestData.push({
+                    "Date": currDay.getDate()+"/"+(currDay.getMonth()+1),
+                    "Offer": $scope.pastOffers[$scope.pastOffers.length-1],
+                    "Request": $scope.pastRequests[$scope.pastRequests.length-1]
+                });
+            }
+            $scope.usersData = [
+                {value: $scope.driverCount, label: "Drivers"},
+                {value: $scope.passengerCount, label: "Passengers"},
+            ];
+            $scope.users2Data = [
+                {value: $scope.maleCount, label: "Male"},
+                {value: $scope.femaleCount, label: "Female"},
+            ];
+            $scope.charts = $scope.createCharts($scope.offerRequestData, $scope.usersData, $scope.users2Data);
+        } else{
+            $state.go('login', {danger: true, msg: 'You are required to login before accessing the page.'});
+        }
+    }, function(error){
+        $state.go('login', {danger: true, msg: (error.data? error.data.error.message: 'No response from the Admin Panel!')});
     });
 
 }).controller('rideCtrl', function($scope, DTOptionsBuilder, DTColumnDefBuilder){
@@ -312,7 +419,7 @@ angular.module('mainApp', ['ui.router', 'ngStorage', 'datatables', 'ui.bootstrap
         $scope.editingOwnData[own.id] = false;
     };
 
-}).controller('uploadCtrl', function($scope, DTOptionsBuilder, DTColumnDefBuilder){
+}).controller('uploadCtrl', function($scope){
 
 });
 
