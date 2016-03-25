@@ -97,11 +97,11 @@ angular.module('mainApp', ['ui.router', 'ngStorage', 'datatables', 'ui.bootstrap
 .controller('dashboardCtrl', function($scope, $state, $rootScope, Admin){
 
     // $scope.events = [
-    //     {type:'Offer', username:'user4', time:'11 mins ago', from:'HKUST', to:'Choi Hung'},
-    //     {type:'Request', username:'user7', time:'23 mins ago', from:'Hang Hau', to:'HKUST'},
-    //     {type:'Request', username:'user12', time:'47 mins ago', from:'HKUST', to:'Choi Hung'},
-    //     {type:'Offer', username:'user2', time:'1 hour ago', from:'HKUST', to:'Hang Hau'},
-    //     {type:'Request', username:'user5', time:'1 hour ago', from:'Sai Kung', to:'HKUST'},
+    //     {type:'Offer', email:'user4@user.com', timeAgo:'11 mins ago', from:'HKUST', to:'Choi Hung'},
+    //     {type:'Request', email:'user7@user.com', timeAgo:'11 mins ago', from:'Hang Hau', to:'HKUST'},
+    //     {type:'Request', email:'user12@user.com', timeAgo:'11 mins ago', from:'HKUST', to:'Choi Hung'},
+    //     {type:'Offer', email:'user2@user.com', timeAgo:'11 mins ago', from:'HKUST', to:'Hang Hau'},
+    //     {type:'Request', email:'user5@user.com', timeAgo:'11 mins ago', from:'Sai Kung', to:'HKUST'},
     // ];
 
     $rootScope.src.removeEventListener('data', $rootScope.dashboardUpdate);
@@ -149,6 +149,9 @@ angular.module('mainApp', ['ui.router', 'ngStorage', 'datatables', 'ui.bootstrap
             $scope.charts[2].setData($scope.users2Data);
         }
         $scope.totalMemCount = $scope.maleCount + $scope.femaleCount;
+        if (data.timeline != null){
+            $scope.events = data.timeline;
+        }
     };
 
     $scope.updateOfferRequestChart = function(pastOffers, pastRequests){
