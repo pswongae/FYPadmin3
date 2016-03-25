@@ -7,9 +7,9 @@
             <div ng-show="alertInfo.msg.length >= 0" ng-class="{'alert alert-danger': alertInfo.danger, 'alert alert-success': !alertInfo.danger}">
                 <strong>{{ alertInfo.msg }}</strong>
             </div>
-            <div class="panel panel-success">
+            <div class="panel material panel-info">
                 <div class="panel-heading">
-                    <h3 class="panel-title">Please Sign In</h3>
+                    <h3 class="panel-title"><i class="fa fa-sign-in"></i> Log In</h3>
                 </div>
                 <div class="panel-body">
                     <form role="form">
@@ -25,7 +25,7 @@
                                     <input name="remember" type="checkbox" value="Remember Me">Remember Me
                                 </label>
                             </div> -->
-                            <button class="btn btn-lg btn-success btn-block" ng-click="login(data)">Login</a>
+                            <button class="btn btn-lg btn-info btn-block" ng-click="login(data)">Login</a>
                         </fieldset>
                     </form>
                 </div>
