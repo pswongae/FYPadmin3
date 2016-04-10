@@ -64,7 +64,7 @@ angular.module('mainApp', ['ui.router', 'ngStorage', 'datatables', 'ui.bootstrap
             var minute = (time.getMinutes() < 10 ? "0" : "") + time.getMinutes();
             var second = (time.getSeconds() < 10 ? "0" : "") + time.getSeconds();
             var day = (time.getDate() < 10 ? "0" : "") + time.getDate();
-            var month = (time.getMonth() < 10 ? "0" : "") + time.getMonth();
+            var month = ((time.getMonth()+1) < 10 ? "0" : "") + (time.getMonth()+1);
             var year = (time.getFullYear() < 10 ? "0" : "") + time.getFullYear();
             return day+"/"+month+"/"+year+" "+hour+":"+minute+":"+second;
         }
