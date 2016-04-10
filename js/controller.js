@@ -56,6 +56,20 @@ angular.module('mainApp', ['ui.router', 'ngStorage', 'datatables', 'ui.bootstrap
         accessToken: null
     });
 })
+.factory('TimeConverter', function(){
+    return {
+        getTimeString: function(date){
+            var time = new Date(date);
+            var hour = (time.getHours() < 10 ? "0" : "") + time.getHours();
+            var minute = (time.getMinutes() < 10 ? "0" : "") + time.getMinutes();
+            var second = (time.getSeconds() < 10 ? "0" : "") + time.getSeconds();
+            var day = (time.getDate() < 10 ? "0" : "") + time.getDate();
+            var month = (time.getMonth() < 10 ? "0" : "") + time.getMonth();
+            var year = (time.getFullYear() < 10 ? "0" : "") + time.getFullYear();
+            return day+"/"+month+"/"+year+" "+hour+":"+minute+":"+second;
+        }
+    }
+})
 
 // Controllers
 
@@ -95,14 +109,6 @@ angular.module('mainApp', ['ui.router', 'ngStorage', 'datatables', 'ui.bootstrap
 
 })
 .controller('dashboardCtrl', function($scope, $state, $rootScope, Admin){
-
-    // $scope.events = [
-    //     {type:'Offer', email:'user4@user.com', timeAgo:'11 mins ago', from:'HKUST', to:'Choi Hung'},
-    //     {type:'Request', email:'user7@user.com', timeAgo:'11 mins ago', from:'Hang Hau', to:'HKUST'},
-    //     {type:'Request', email:'user12@user.com', timeAgo:'11 mins ago', from:'HKUST', to:'Choi Hung'},
-    //     {type:'Offer', email:'user2@user.com', timeAgo:'11 mins ago', from:'HKUST', to:'Hang Hau'},
-    //     {type:'Request', email:'user5@user.com', timeAgo:'11 mins ago', from:'Sai Kung', to:'HKUST'},
-    // ];
 
     $rootScope.src.removeEventListener('data', $rootScope.dashboardUpdate);
     $rootScope.dashboardUpdate = function(value) {
@@ -233,37 +239,63 @@ angular.module('mainApp', ['ui.router', 'ngStorage', 'datatables', 'ui.bootstrap
         $state.go('login', {danger: true, msg: (error.data? error.data.error.message: 'No response from the Admin Panel!')});
     });
 
-}).controller('rideCtrl', function($scope, DTOptionsBuilder, DTColumnDefBuilder){
+}).controller('rideCtrl', function($scope, DTOptionsBuilder, DTColumnDefBuilder, Admin, Ride, Request, TimeConverter){
 
     $scope.dtOptions = DTOptionsBuilder.newOptions().withPaginationType('simple').withOption('responsive', true);
     $scope.dtColumnDefs1 = [
-        DTColumnDefBuilder.newColumnDef(6).withOption('width', '15%'),
-        DTColumnDefBuilder.newColumnDef(7).withOption('width', '15%')
+        DTColumnDefBuilder.newColumnDef(0).withOption('width', '7%'),
+        DTColumnDefBuilder.newColumnDef(1).withOption('width', '10%'),
+        DTColumnDefBuilder.newColumnDef(4).withOption('width', '10%'),
+        DTColumnDefBuilder.newColumnDef(6).withOption('width', '10%'),
+        DTColumnDefBuilder.newColumnDef(7).withOption('width', '16%'),
+        DTColumnDefBuilder.newColumnDef(8).withOption('width', '10%')
     ];
     $scope.dtColumnDefs2 = [
-        DTColumnDefBuilder.newColumnDef(5).withOption('width', '15%'),
-        DTColumnDefBuilder.newColumnDef(6).withOption('width', '15%')
+        DTColumnDefBuilder.newColumnDef(0).withOption('width', '7%'),
+        DTColumnDefBuilder.newColumnDef(2).withOption('width', '15%'),
+        DTColumnDefBuilder.newColumnDef(3).withOption('width', '15%'),
+        DTColumnDefBuilder.newColumnDef(4).withOption('width', '10%'),
+        DTColumnDefBuilder.newColumnDef(5).withOption('width', '16%'),
+        DTColumnDefBuilder.newColumnDef(6).withOption('width', '10%')
     ];
     $scope.dtColumnDefs3 = [
-        DTColumnDefBuilder.newColumnDef(5).withOption('width', '15%')
+        DTColumnDefBuilder.newColumnDef(0).withOption('width', '7%'),
+        DTColumnDefBuilder.newColumnDef(5).withOption('width', '16%'),
+        DTColumnDefBuilder.newColumnDef(6).withOption('width', '10%')
     ];
 
-    $scope.offers = [
-        {id:'4', username:'user4', initLoc:'HKUST', destination:'Choi Hung', availableSeats: '3', genderPref:'-', timestamp:'2015/10/25 06:48'},
-        {id:'2', username:'user2', initLoc:'HKUST', destination:'Hang Hau', availableSeats: '2', genderPref:'F', timestamp:'2015/10/26 13:24'},
-    ];
+    Admin.adminGetRide(function(value, responseheaders){
+        $scope.offers = value.status;
+        $scope.offers.forEach(function(offer){
+            offer.ctime = TimeConverter.getTimeString(offer.time);
+        });
+    });
 
-    $scope.requests = [
-        {id:'7', username:'user7', initLoc:'Hang Hau', destination:'HKUST', genderPref:'-', timestamp:'2015/10/25 07:08'},
-        {id:'12', username:'user12', initLoc:'HKUST', destination:'Choi Hung', genderPref:'F', timestamp:'2015/10/27 12:54'},
-        {id:'5', username:'user5', initLoc:'Sai Kung', destination:'HKUST', genderPref:'M', timestamp:'2015/10/29 09:23'},
-    ];
+    Admin.adminGetRequest(function(value, responseheaders){
+        $scope.requests = value.status;
+        $scope.requests.forEach(function(request){
+            request.ctime = TimeConverter.getTimeString(request.time);
+        });
+    });
 
-    $scope.joins = [
-        {driverId:'7', memberId:'1', timestamp:'2015/10/25 07:08', match_icon:'icon_001.png', finished:'Y'},
-        {driverId:'3', memberId:'2', timestamp:'2015/10/27 12:54', match_icon:'icon_002.png', finished:'Y'},
-    ];
-    console.log($scope.joins);
+    Admin.adminGetJoin(function(value, responseheaders){
+        $scope.joins = value.status;
+        $scope.joins.forEach(function(join){
+            join.ctime = TimeConverter.getTimeString(join.time);
+        });
+    });
+
+    $scope.cancelRide = function(id, destination){
+        Ride.cancelRide({"rideId": id, "leaveUst": (destination!="HKUST")}, function(value, responseheaders){
+            alert(value.status);
+        });
+    }
+
+    $scope.cancelRequest = function(id, destination){
+        Request.cancelMatch({"requestId": id, "leaveUst": (destination!="HKUST")}, function(value, responseheaders){
+            alert(value.status);
+        });
+    }
 
 }).controller('usersCtrl', function($scope, DTOptionsBuilder, DTColumnDefBuilder){
 
@@ -312,37 +344,6 @@ angular.module('mainApp', ['ui.router', 'ngStorage', 'datatables', 'ui.bootstrap
     $scope.update = function(user){
         $scope.editingData[user.id] = false;
     };
-
-}).controller('rideCtrl', function($scope, DTOptionsBuilder, DTColumnDefBuilder){
-
-    $scope.dtOptions = DTOptionsBuilder.newOptions().withPaginationType('simple').withOption('responsive', true);
-    $scope.dtColumnDefs1 = [
-        DTColumnDefBuilder.newColumnDef(6).withOption('width', '15%'),
-        DTColumnDefBuilder.newColumnDef(7).withOption('width', '15%')
-    ];
-    $scope.dtColumnDefs2 = [
-        DTColumnDefBuilder.newColumnDef(5).withOption('width', '15%'),
-        DTColumnDefBuilder.newColumnDef(6).withOption('width', '15%')
-    ];
-    $scope.dtColumnDefs3 = [
-        DTColumnDefBuilder.newColumnDef(5).withOption('width', '15%')
-    ];
-
-    $scope.offers = [
-        {id:'4', username:'user4', initLoc:'HKUST', destination:'Choi Hung', availableSeats: '3', genderPref:'-', timestamp:'2015/10/25 06:48'},
-        {id:'2', username:'user2', initLoc:'HKUST', destination:'Hang Hau', availableSeats: '2', genderPref:'F', timestamp:'2015/10/26 13:24'},
-    ];
-
-    $scope.requests = [
-        {id:'7', username:'user7', initLoc:'Hang Hau', destination:'HKUST', genderPref:'-', timestamp:'2015/10/25 07:08'},
-        {id:'12', username:'user12', initLoc:'HKUST', destination:'Choi Hung', genderPref:'F', timestamp:'2015/10/27 12:54'},
-        {id:'5', username:'user5', initLoc:'Sai Kung', destination:'HKUST', genderPref:'M', timestamp:'2015/10/29 09:23'},
-    ];
-
-    $scope.joins = [
-        {driverId:'7', memberId:'1', timestamp:'2015/10/25 07:08', match_icon:'icon_001.png', finished:'Y'},
-        {driverId:'3', memberId:'2', timestamp:'2015/10/27 12:54', match_icon:'icon_002.png', finished:'Y'},
-    ];
 
 }).controller('vehicleCtrl', function($scope, DTOptionsBuilder, DTColumnDefBuilder){
 
