@@ -20,7 +20,7 @@
                             <thead>
                                 <tr>
                                     <th>Id</th>
-                                    <th>Username</th>
+                                    <th>Email</th>
                                     <th>Password</th>
                                     <th>Gender</th>
                                     <th>Phone</th>
@@ -37,8 +37,8 @@
 										<div ng-show="editingData[user.id]"><input type="text" style="width:100%;" class="form-control" ng-model="user.id" /></div>
 									</td>
                                     <td>
-										<div ng-hide="editingData[user.id]">{{ user.username }}</div>
-										<div ng-show="editingData[user.id]"><input type="text" style="width:100%;" class="form-control" ng-model="user.username" /></div>
+										<div ng-hide="editingData[user.id]">{{ user.email }}</div>
+										<div ng-show="editingData[user.id]"><input type="text" style="width:100%;" class="form-control" ng-model="user.email" /></div>
 									</td>
                                     <td>
 										<div ng-hide="editingData[user.id]">{{ user.password }}</div>
@@ -55,8 +55,8 @@
 										</div>
 									</td>
                                     <td>
-										<div ng-hide="editingData[user.id]">{{ user.phone }}</div>
-										<div ng-show="editingData[user.id]"><input type="text" class="form-control" style="width:105%;" ng-model="user.phone" /></div>
+										<div ng-hide="editingData[user.id]">{{ user.phone_number }}</div>
+										<div ng-show="editingData[user.id]"><input type="text" class="form-control" style="width:105%;" ng-model="user.phone_number" /></div>
 									</td>
                                     <td>
 										<div ng-hide="editingData[user.id]">{{ user.status }}</div>
@@ -94,7 +94,7 @@
 										</div>
 									</td>
 									
-                                    <td>{{ user.regdate }}</td>		
+                                    <td>{{ user.created }}</td>		
                                     <td>
 										<a href="" ng-hide="editingData[user.id]" ng-click="modify(user)"><i class="fa fa-edit fa-lg"></i>&nbsp;Edit</a>
 										<a href="" ng-show="editingData[user.id]" ng-click="update(user)"><i class="fa fa-upload fa-lg"></i>&nbsp;Update</a><br>
@@ -104,6 +104,8 @@
 								</tr>
                             </tbody>
                         </table>
+                    </div>
+
                         <div class="text-center">
                             <button type="button" class="btn btn-default btn-circle btn-lg" data-toggle="modal" data-target="#addUser"><i class="fa fa-user-plus"></i></button>
                         </div>
@@ -184,7 +186,7 @@
 							</div>
 						<!-- End of Modal for add ride offer -->
 						
-                    </div>
+                    <!-- </div> -->
                     <!-- /.table-responsive -->
                 </div>
                 <!-- /.panel-body -->

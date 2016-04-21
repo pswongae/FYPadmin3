@@ -66,10 +66,31 @@ angular.module('mainApp', ['ui.router', 'ngStorage', 'datatables', 'ui.bootstrap
             var day = (time.getDate() < 10 ? "0" : "") + time.getDate();
             var month = ((time.getMonth()+1) < 10 ? "0" : "") + (time.getMonth()+1);
             var year = (time.getFullYear() < 10 ? "0" : "") + time.getFullYear();
-            return day+"/"+month+"/"+year+" "+hour+":"+minute+":"+second;
+            return year+"/"+month+"/"+day+" "+hour+":"+minute+":"+second;
         }
     }
 })
+.factory("XLSXReaderService", ['$q', '$rootScope',
+    function($q, $rootScope) {
+        var service = function(data) {
+            angular.extend(this, data);
+        }
+
+        service.readFile = function(file, readCells, toJSON) {
+            var deferred = $q.defer();
+
+            XLSXReader(file, readCells, toJSON, function(data) {
+                $rootScope.$apply(function() {
+                    deferred.resolve(data);
+                });
+            });
+
+            return deferred.promise;
+        }
+
+        return service;
+    }
+])
 
 // Controllers
 
@@ -264,6 +285,10 @@ angular.module('mainApp', ['ui.router', 'ngStorage', 'datatables', 'ui.bootstrap
         DTColumnDefBuilder.newColumnDef(6).withOption('width', '10%')
     ];
 
+    $scope.offers = [];
+    $scope.requests = [];
+    $scope.joins = [];
+
     Admin.adminGetRide(function(value, responseheaders){
         $scope.offers = value.status;
         $scope.offers.forEach(function(offer){
@@ -297,55 +322,46 @@ angular.module('mainApp', ['ui.router', 'ngStorage', 'datatables', 'ui.bootstrap
         });
     }
 
-}).controller('usersCtrl', function($scope, DTOptionsBuilder, DTColumnDefBuilder){
+}).controller('usersCtrl', function($scope, DTOptionsBuilder, DTColumnDefBuilder, Admin, TimeConverter){
 
     $scope.dtOptions = DTOptionsBuilder.newOptions().withPaginationType('simple').withOption('responsive', true);
     $scope.dtColumnDefs = [
-        DTColumnDefBuilder.newColumnDef(7).withOption('width', '15%'),
-        DTColumnDefBuilder.newColumnDef(8).withOption('width', '15%')
+        DTColumnDefBuilder.newColumnDef(7).withOption('width', '16%'),
+        DTColumnDefBuilder.newColumnDef(8).withOption('width', '10%')
     ];
 
-    $scope.users = [
-        {id:'0', username:'admin', password:'adminpwd', phone:'1234 5678', gender:'M', status:'Authorized', regdate:'2015/09/24 12:08'},
-        {id:'1', username:'user', password:'userpwd', phone:'1234 5678', gender:'F', status:'Authorized', regdate:'2015/10/16 23:47'},
-        {id:'2', username:'user1', password:'userpwd1', phone:'1234 5678', gender:'M', status:'Authorized', regdate:'2015/10/16 23:47'},
-        {id:'3', username:'user2', password:'userpwd2', phone:'1234 5678', gender:'M', status:'Authorized', regdate:'2015/10/17 13:45'},
-        {id:'4', username:'user3', password:'userpwd3', phone:'1234 5678', gender:'F', status:'Unauthorized', regdate:'2015/10/18 22:47'},
-        {id:'5', username:'user4', password:'userpwd4', phone:'1234 5678', gender:'M', status:'Authorized', regdate:'2015/10/19 23:37'},
-        {id:'6', username:'user5', password:'userpwd5', phone:'1234 5678', gender:'M', status:'Unauthorized', regdate:'2015/10/20 20:44'},
-        {id:'7', username:'user6', password:'userpwd6', phone:'1234 5678', gender:'F', status:'Authorized', regdate:'2015/10/21 23:47'},
-        {id:'8', username:'user7', password:'userpwd7', phone:'1234 5678', gender:'F', status:'Authorized', regdate:'2015/10/22 15:46'},
-        {id:'9', username:'user8', password:'userpwd8', phone:'1234 5678', gender:'F', status:'Authorized', regdate:'2015/10/23 23:48'},
-        {id:'10', username:'user9', password:'userpwd9', phone:'1234 5678', gender:'M', status:'Authorized', regdate:'2015/10/24 14:27'},
-        {id:'11', username:'user10', password:'userpwd10', phone:'1234 5678', gender:'M', status:'Authorized', regdate:'2015/10/25 23:17'},
-        {id:'12', username:'user11', password:'userpwd11', phone:'1234 5678', gender:'F', status:'Authorized', regdate:'2015/10/26 18:47'},
-        {id:'13', username:'user12', password:'userpwd12', phone:'1234 5678', gender:'F', status:'Authorized', regdate:'2015/10/27 06:14'},
-        {id:'14', username:'user13', password:'userpwd13', phone:'1234 5678', gender:'M', status:'Authorized', regdate:'2015/10/28 02:05'},
-    ];
+    $scope.users = [];
+    $scope.cars = [];
 
-    $scope.cars = [
-        {id:'2', license_number:'GG404', color:'blue', maker:'Benz'},
-        {id:'5', license_number:'GG504', color:'red', maker:'Benz'},
-        {id:'7', license_number:'GG604', color:'grey', maker:'Benz'},
-        {id:'10', license_number:'GG704', color:'black', maker:'Benz'},
-        {id:'7', license_number:'GG404', color:'black', maker:'Benz'},
-    ];
-    
-    $scope.editingData = {};
-    
-    for (var i = 0, length = $scope.users.length; i < length; i++) {
-      $scope.editingData[$scope.users[i].id] = false;
-    }
-    
-    $scope.modify = function(user){
-        $scope.editingData[user.id] = true;
-    };
+    Admin.adminGetMember(function(value, responseheaders){
+        $scope.users = value.status;
+        $scope.users.forEach(function(user){
+            user.status = (user.authorized == "yes") ? "Authorized" : "Unauthorized";
+            user.created = TimeConverter.getTimeString(user.created);
+            user.password = "******";
+        });
+        $scope.editingData = {};
+        for (var i = 0, length = $scope.users.length; i < length; i++) {
+          $scope.editingData[$scope.users[i].id] = false;
+        }
 
-    $scope.update = function(user){
-        $scope.editingData[user.id] = false;
-    };
+        $scope.modify = function(user){
+            $scope.editingData[user.id] = true;
+        };
 
-}).controller('vehicleCtrl', function($scope, DTOptionsBuilder, DTColumnDefBuilder){
+        $scope.update = function(user){
+            $scope.editingData[user.id] = false;
+        };
+    });
+
+    Admin.adminGetOwnership(function(value, responseheaders){
+        $scope.cars = value.status;
+        $scope.cars.forEach(function(car){
+            car.id = car.memberId;
+        });
+    });
+
+}).controller('vehicleCtrl', function($scope, DTOptionsBuilder, DTColumnDefBuilder, Vehicle, Admin){
 
     $scope.dtOptions = DTOptionsBuilder.newOptions().withPaginationType('simple').withOption('responsive', true);
     $scope.dtColumnDefs1 = [
@@ -355,19 +371,12 @@ angular.module('mainApp', ['ui.router', 'ngStorage', 'datatables', 'ui.bootstrap
         DTColumnDefBuilder.newColumnDef(2).withOption('width', '18%')
     ];
 
-    $scope.registers = [
-        {license_number:'GG404', color:'blue', maker:'Benz'},
-        {license_number:'GG504', color:'red', maker:'Benz'},
-        {license_number:'GG604', color:'grey', maker:'Benz'},
-        {license_number:'GG704', color:'black', maker:'Benz'},
-    ];
+    $scope.registers = Vehicle.find({});
+    $scope.owns = [];
 
-    $scope.owns = [
-        {id:'0', memberId:'7', license_number:'GG404'},
-        {id:'1', memberId:'12', license_number:'GG504'},
-        {id:'2', memberId:'5', license_number:'GG604'},
-        {id:'3', memberId:'5', license_number:'GG704'},
-    ];
+    Admin.adminGetOwnership(function(value, responseheaders){
+        $scope.owns = value.status;
+    });
     
     $scope.editingRegData = {};
     $scope.editingOwnData = {};
@@ -395,8 +404,49 @@ angular.module('mainApp', ['ui.router', 'ngStorage', 'datatables', 'ui.bootstrap
         $scope.editingOwnData[own.id] = false;
     };
 
-}).controller('uploadCtrl', function($scope){
+}).controller('uploadCtrl', function($scope, $state, XLSXReaderService, Admin){
 
+    $scope.showPreview = false;
+    $scope.showJSONPreview = true;
+    $scope.json_string = "";
+
+    $scope.fileChanged = function(files) {
+        $scope.isProcessing = true;
+        $scope.sheets = [];
+        $scope.excelFile = files[0];
+        XLSXReaderService.readFile($scope.excelFile, $scope.showPreview, $scope.showJSONPreview).then(function(xlsxData) {
+            $scope.sheets = xlsxData.sheets;
+            $scope.isProcessing = false;
+        });
+    }
+
+    $scope.updateJSONString = function() {
+        $scope.json_string = JSON.stringify($scope.sheets[$scope.selectedSheetName], null, 2);
+    }
+
+    $scope.showPreviewChanged = function() {
+        if ($scope.showPreview) {
+            $scope.showJSONPreview = false;
+            $scope.isProcessing = true;
+            XLSXReaderService.readFile($scope.excelFile, $scope.showPreview, $scope.showJSONPreview).then(function(xlsxData) {
+                $scope.sheets = xlsxData.sheets;
+                $scope.isProcessing = false;
+            });
+        }
+    }
+
+    $scope.uploadClick = function(){
+        var jsonString = JSON.parse($scope.json_string);
+        Admin.adminMassImport(jsonString, function(value, responseheaders){
+            if (value.status == "success"){
+                alert("Member records are created successfully!");
+                $state.go('home.users');
+            } else{
+                alert("Fail to create member records! Please check the file again.");
+                $state.go($state.current, {}, {reload: true});
+            }            
+        });
+    }
 });
 
 
