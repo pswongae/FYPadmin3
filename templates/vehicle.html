@@ -42,11 +42,12 @@
                                     <td>
 										<a href="" ng-hide="editingRegData[register.license_number]" ng-click="modifyReg(register)"><i class="fa fa-edit fa-lg"></i>&nbsp;Edit</a>
 										<a href="" ng-show="editingRegData[register.license_number]" ng-click="updateReg(register)"><i class="fa fa-upload fa-lg"></i>&nbsp;Update</a>
-										&nbsp;<a href=""><i class="fa fa-remove fa-lg"></i>&nbsp;Remove</a>
+										&nbsp;<a href="" ng-click="removeReg(register)"><i class="fa fa-remove fa-lg"></i>&nbsp;Remove</a>
 									</td>
                                 </tr>
                             </tbody>
                         </table>
+                    </div>
                         <div class="text-center">
                             <button type="button" class="btn btn-default btn-circle btn-lg"  data-toggle="modal" data-target="#addVehicle"><i class="fa fa-plus"></i></button>
                         </div>
@@ -62,30 +63,29 @@
 											<div class="form-group row">
 												<label for="inputLicenseNumber" class="col-sm-4 text-right form-control-label">License Number</label>
 												<div class="input col-sm-8">
-													<input type="text" class="form-control" name="inputLicenseNumber" id="inputLicenseNumber" placeholder="Enter License Number" required="required">
+													<input type="text" class="form-control" name="inputLicenseNumber" id="inputLicenseNumber" placeholder="Enter License Number" required="required" ng-model="newRegister.license_number">
 												</div>
 											</div>
 											<div class="form-group row">
 												<label for="inputColor" class="col-sm-4 text-right  form-control-label">Color</label>
 												<div class="input col-sm-8">
-													<input type="text" class="form-control" name="inputColor" id="inputColor" placeholder="Enter Vehicle Color" required="required">
+													<input type="text" class="form-control" name="inputColor" id="inputColor" placeholder="Enter Vehicle Color" required="required" ng-model="newRegister.color">
 												</div>
 											</div>
 											<div class="form-group row">
 												<label for="inputMaker" class="col-sm-4 text-right  form-control-label">Maker</label>
 												<div class="input col-sm-8">
-													<input type="text" class="form-control" name="inputMaker" id="inputMakern" placeholder="Enter Maker" required="required">
+													<input type="text" class="form-control" name="inputMaker" id="inputMakern" placeholder="Enter Maker" required="required" ng-model="newRegister.maker">
 												</div>
 											</div>														
 										</form>
 								  </div>
 								  <div class="modal-footer">
 									<button type="button" class="btn btn-default" data-dismiss="modal">Cancel</button>
-									<button type="button" class="btn btn-primary">Add Vehicle</button>
+									<button type="button" class="btn btn-primary" data-dismiss="modal" ng-click="addReg(newRegister, true, null)">Add Vehicle</button>
 								  </div>
 								</div>
 							  </div>
-							</div>
 						</div>
                     <!-- /.table-responsive -->
                 </div>
@@ -128,10 +128,11 @@
                                     <td>
 									<a href="" ng-hide="editingOwnData[own.id]" ng-click="modifyOwn(own)"><i class="fa fa-edit fa-lg"></i>&nbsp;Edit</a>
 									<a href="" ng-show="editingOwnData[own.id]" ng-click="updateOwn(own)"><i class="fa fa-upload fa-lg"></i>&nbsp;Update</a>
-								    &nbsp;<a href=""><i class="fa fa-remove fa-lg"></i>&nbsp;Remove</a></td>
+								    &nbsp;<a href="" ng-click="removeOwn(own)"><i class="fa fa-remove fa-lg"></i>&nbsp;Remove</a></td>
                                 </tr>
                             </tbody>
                         </table>
+                    </div>
                         <div class="text-center">
                             <button type="button" class="btn btn-default btn-circle btn-lg"  data-toggle="modal" data-target="#addOwn"><i class="fa fa-plus"></i></button>
                         </div>
@@ -147,24 +148,23 @@
 											<div class="form-group row">
 												<label for="inputId" class="col-sm-4 text-right  form-control-label">ID</label>
 												<div class="input col-sm-8">
-													<input type="text" class="form-control" name="inputId" id="inputId" placeholder="Enter Driver's User ID" required="required">
+													<input type="text" class="form-control" name="inputId" id="inputId" placeholder="Enter Driver's User ID" required="required" ng-model="newOwn.id">
 												</div>
 											</div>
 											<div class="form-group row">
 												<label for="inputLicenseNumber" class="col-sm-4 text-right form-control-label">License Number</label>
 												<div class="input col-sm-8">
-													<input type="text" class="form-control" name="inputLicenseNumber" id="inputLicenseNumber" placeholder="Enter License Number" required="required">
+													<input type="text" class="form-control" name="inputLicenseNumber" id="inputLicenseNumber" placeholder="Enter License Number" required="required" ng-model="newOwn.license_number">
 												</div>
 											</div>													
 										</form>
 								  </div>
 								  <div class="modal-footer">
 									<button type="button" class="btn btn-default" data-dismiss="modal">Cancel</button>
-									<button type="button" class="btn btn-primary">Add Ownership</button>
+									<button type="button" class="btn btn-primary" data-dismiss="modal" ng-click="addOwn(newOwn)">Add Ownership</button>
 								  </div>
 								</div>
 							  </div>
-							</div>
 						</div>
                     <!-- /.table-responsive -->
                 </div>

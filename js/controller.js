@@ -31,6 +31,7 @@ angular.module('mainApp', ['ui.router', 'ngStorage', 'datatables', 'ui.bootstrap
         })
         .state('home.vehicle', {
             url: '/vehicle',
+            params: {userId:{}},
             templateUrl: 'templates/vehicle.html',
             controller: 'vehicleCtrl'
         })
@@ -322,7 +323,7 @@ angular.module('mainApp', ['ui.router', 'ngStorage', 'datatables', 'ui.bootstrap
         });
     }
 
-}).controller('usersCtrl', function($scope, DTOptionsBuilder, DTColumnDefBuilder, Admin, TimeConverter){
+}).controller('usersCtrl', function($scope, $state, DTOptionsBuilder, DTColumnDefBuilder, Admin, TimeConverter){
 
     $scope.dtOptions = DTOptionsBuilder.newOptions().withPaginationType('simple').withOption('responsive', true);
     $scope.dtColumnDefs = [
@@ -330,6 +331,7 @@ angular.module('mainApp', ['ui.router', 'ngStorage', 'datatables', 'ui.bootstrap
         DTColumnDefBuilder.newColumnDef(8).withOption('width', '10%')
     ];
 
+    $scope.newUser = {};
     $scope.users = [];
     $scope.cars = [];
 
@@ -340,18 +342,6 @@ angular.module('mainApp', ['ui.router', 'ngStorage', 'datatables', 'ui.bootstrap
             user.created = TimeConverter.getTimeString(user.created);
             user.password = "******";
         });
-        $scope.editingData = {};
-        for (var i = 0, length = $scope.users.length; i < length; i++) {
-          $scope.editingData[$scope.users[i].id] = false;
-        }
-
-        $scope.modify = function(user){
-            $scope.editingData[user.id] = true;
-        };
-
-        $scope.update = function(user){
-            $scope.editingData[user.id] = false;
-        };
     });
 
     Admin.adminGetOwnership(function(value, responseheaders){
@@ -361,7 +351,58 @@ angular.module('mainApp', ['ui.router', 'ngStorage', 'datatables', 'ui.bootstrap
         });
     });
 
-}).controller('vehicleCtrl', function($scope, DTOptionsBuilder, DTColumnDefBuilder, Vehicle, Admin){
+    $scope.editingData = {};
+    for (var i = 0, length = $scope.users.length; i < length; i++) {
+      $scope.editingData[$scope.users[i].id] = false;
+    }
+
+    $scope.modify = function(user){
+        $scope.editingData[user.id] = true;
+    };
+
+    $scope.update = function(user){
+        var data = {};
+        data.id = user.id;
+        data.email = user.email;
+        if (user.password != "******"){
+            data.password = user.password;
+        }
+        data.gender = user.gender;
+        data.phone_number = user.phone_number;
+        data.authorized = (user.status == "Authorized") ? "yes" : "no";
+        data.emailVerified = (user.status == "Authorized") ? "1" : null;
+        Admin.adminChange(data, function(value, responseheaders){
+            $scope.editingData[user.id] = false;
+            alert("User information updated!");
+            $state.go($state.current, {}, {reload: true});
+        });
+    };
+
+    $scope.remove = function(user){
+        Admin.adminRemoveRecord({item: "User", info: {id: user.id}}, function(value, responseheaders){
+            alert("Member record removed!");
+            $state.go($state.current, {}, {reload: true});
+        })
+    }
+
+    $scope.goToVehicle = function(id){
+        $state.go('home.vehicle', {userId: (id+"")});
+    }
+
+    $scope.add = function(user){
+        var data = user;
+        data.created = new Date();
+        if (data.authorized == "yes"){
+            data.emailVerified = 1;
+        }
+        Admin.addMember(data, function(value, responseheaders){
+            alert("Member record created!");
+            //$state.go($state.current, {}, {reload: true});
+            history.go(0);
+        });
+    }
+
+}).controller('vehicleCtrl', function($scope, $stateParams, $state, DTOptionsBuilder, DTColumnDefBuilder, Vehicle, Admin, Own){
 
     $scope.dtOptions = DTOptionsBuilder.newOptions().withPaginationType('simple').withOption('responsive', true);
     $scope.dtColumnDefs1 = [
@@ -373,6 +414,9 @@ angular.module('mainApp', ['ui.router', 'ngStorage', 'datatables', 'ui.bootstrap
 
     $scope.registers = Vehicle.find({});
     $scope.owns = [];
+    $scope.newReg = {};
+    $scope.newOwn = {};
+    $scope.newOwn.id = typeof($stateParams.userId) == "string" ? $stateParams.userId : "";
 
     Admin.adminGetOwnership(function(value, responseheaders){
         $scope.owns = value.status;
@@ -393,7 +437,14 @@ angular.module('mainApp', ['ui.router', 'ngStorage', 'datatables', 'ui.bootstrap
     };
 
     $scope.updateReg = function(register){
+        var data = {};
+        data.id = register.id;
+        data.license_number = register.license_number;
+        data.color = register.color;
+        data.maker = register.maker;
+        Vehicle.prototype$updateAttributes(data);
         $scope.editingRegData[register.license_number] = false;
+        alert("Vehicle updated!");
     };
     
     $scope.modifyOwn = function(own){
@@ -401,8 +452,82 @@ angular.module('mainApp', ['ui.router', 'ngStorage', 'datatables', 'ui.bootstrap
     };
 
     $scope.updateOwn = function(own){
-        $scope.editingOwnData[own.id] = false;
+        Vehicle.find({filter: {where: {license_number: own.license_number}}}, function(value, responseheaders){
+            if (value.length > 0){
+                var data = {};
+                data.id = own.id;
+                data.memberId = own.memberId;
+                data.vehicleId = value.id;
+                Own.prototype$updateAttributes(data);
+                $scope.editingOwnData[own.id] = false;
+                alert("Ownership updated!");
+            } else{
+                var car = {};
+                car.license_number = own.license_number;
+                car.maker = "";
+                car.color = "";
+                $scope.addReg(car, false, function(){
+                    Vehicle.findOne({filter: {where: {license_number: own.license_number}}}, function(value, responseheaders){
+                        var data = {};
+                        data.id = own.id;
+                        data.memberId = own.memberId;
+                        data.vehicleId = value.id;
+                        console.log(data);
+                        Own.prototype$updateAttributes(data);
+                        $scope.editingOwnData[own.id] = false;
+                        alert("Ownership updated!");
+                        history.go(0);
+                    });
+                });
+            }
+        });
+        
     };
+
+    $scope.removeReg = function(register){
+        Admin.adminRemoveRecord({item: "Vehicle", info: {id: register.id}}, function(value, responseheaders){
+            alert("Vehicle record removed!");
+            $state.go($state.current, {}, {reload: true});
+        });
+    }
+
+    $scope.removeOwn = function(own){
+        Admin.adminRemoveRecord({item: "Own", info: {id: own.id}}, function(value, responseheaders){
+            alert("Ownership record removed!");
+            $state.go($state.current, {}, {reload: true});
+        });
+    }
+
+    $scope.addReg = function(register, refresh, cb){
+        var data = {};
+        data.memberId = -1;
+        data.car = register;
+        Admin.adminAddVehicle(data, function(value, responseheaders){
+            if (refresh){
+                //$state.go($state.current, {userId: $scope.newOwn.id}, {reload: true});
+                alert("Vehicle added!");
+                history.go(0);
+            }
+            if (cb != null){
+                cb();
+            }
+        });
+    }
+
+    $scope.addOwn = function(own){
+        var data = {};
+        var car = {};
+        car.license_number = own.license_number;
+        car.maker = "";
+        car.color = "";
+        data.memberId = own.id;
+        data.car = car;
+        Admin.adminAddVehicle(data, function(value, responseheaders){
+            alert("Ownership added!");
+            //$state.go($state.current, {userId: $scope.newOwn.id}, {reload: true});
+            history.go(0);
+        });
+    }
 
 }).controller('uploadCtrl', function($scope, $state, XLSXReaderService, Admin){
 

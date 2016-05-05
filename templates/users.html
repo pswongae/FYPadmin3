@@ -33,8 +33,7 @@
                             <tbody>
                                 <tr ng-repeat="user in users">
                                     <td>
-										<div ng-hide="editingData[user.id]">{{ user.id }}</div>
-										<div ng-show="editingData[user.id]"><input type="text" style="width:100%;" class="form-control" ng-model="user.id" /></div>
+										{{ user.id }}
 									</td>
                                     <td>
 										<div ng-hide="editingData[user.id]">{{ user.email }}</div>
@@ -47,10 +46,10 @@
                                     <td>
 										<div ng-hide="editingData[user.id]">{{ user.gender }}</div>
 										<div ng-show="editingData[user.id]">
-										<select class="form-control  col-sm-8" style="width:100%;"  required="required">
+										<select class="form-control  col-sm-8" style="width:100%;"  required="required" ng-model="user.gender">
 											<option value="{{user.gender}}" disabled="" selected="user.gender">{{user.gender}}</option>
-											<option value="F">F</option>
-											<option value="M<">M</option>
+											<option value="male">male</option>
+											<option value="female">female</option>
 										</select>
 										</div>
 									</td>
@@ -61,7 +60,7 @@
                                     <td>
 										<div ng-hide="editingData[user.id]">{{ user.status }}</div>
 										<div ng-show="editingData[user.id]">
-											<select class=" form-control  col-sm-8" style="width:105%;"  required="required">
+											<select class=" form-control  col-sm-8" style="width:105%;"  required="required" ng-model="user.status">
 												<option value="{{ user.status }}" disabled="" selected="user.status">{{user.status}}</option>
 												<option value="Authorized">Authorized</option>
 												<option value="Unauthorized<">Unauthorized</option>
@@ -86,7 +85,7 @@
 											</div>
 										</div>
 										<div ng-show="editingData[user.id]">
-											<a ui-sref="^.vehicle" target="_blank" class="btn btn-info">Add Vehicle</a>
+											<a href="" target="_blank" class="btn btn-info" ng-click="goToVehicle(user.id)">Add Vehicle</a>
 											<div ng-repeat="car in cars | filter:{'id':  user.id}:true| orderBy:'license_number'">
 												<li popover-title="{{car.license_number}}" uib-popover="{{car.color}} vehicle made by {{car.maker}}" popover-trigger="mouseenter" popover-placement="right">{{car.license_number}}</li>
 											</div>
@@ -98,7 +97,7 @@
                                     <td>
 										<a href="" ng-hide="editingData[user.id]" ng-click="modify(user)"><i class="fa fa-edit fa-lg"></i>&nbsp;Edit</a>
 										<a href="" ng-show="editingData[user.id]" ng-click="update(user)"><i class="fa fa-upload fa-lg"></i>&nbsp;Update</a><br>
-										<a href=""><i class="fa fa-remove fa-lg"></i>&nbsp;Remove</a>
+										<a href="" ng-click="remove(user)"><i class="fa fa-remove fa-lg"></i>&nbsp;Remove</a>
 									</td>
 									
 								</tr>
@@ -120,66 +119,66 @@
 								  <div class="modal-body">
 										<form>
 											<div class="form-group row">
-												<label for="inputId" class="col-sm-4 text-right form-control-label">Id</label>
+												<label for="inputUsername" class="col-sm-4 text-right form-control-label">Email</label>
 												<div class="input col-sm-8">
-													<input type="text" class="form-control" name="inputId" id="inputId" placeholder="Enter ID" required="required">
+													<input type="text" class="form-control" name="inputEmail" id="inputEmail" placeholder="Enter Email" required="required" ng-model="newUser.email">
 												</div>
 											</div>
 											<div class="form-group row">
-												<label for="inputUsername" class="col-sm-4 text-right form-control-label">Username</label>
+												<label for="inputUsername" class="col-sm-4 text-right form-control-label">First Name</label>
 												<div class="input col-sm-8">
-													<input type="text" class="form-control" name="inputUsername" id="inputUsername" placeholder="Enter Username" required="required">
+													<input type="text" class="form-control" name="inputFirstName" id="inputFirstName" placeholder="Enter First Name" required="required" ng-model="newUser.first_name">
+												</div>
+											</div>
+											<div class="form-group row">
+												<label for="inputUsername" class="col-sm-4 text-right form-control-label">Last Name</label>
+												<div class="input col-sm-8">
+													<input type="text" class="form-control" name="inputLastName" id="inputLastName" placeholder="Enter Last Name" required="required" ng-model="newUser.last_name">
 												</div>
 											</div>
 											<div class="form-group row">
 												<label for="inputPw" class="col-sm-4 text-right form-control-label">Password</label>
 												<div class="input col-sm-8">
-													<input type="text" class="form-control" name="inputPw" id="inputPw" placeholder="Enter Password" required="required">
+													<input type="text" class="form-control" name="inputPw" id="inputPw" placeholder="Enter Password" required="required" ng-model="newUser.password">
 												</div>
 											</div>
 											<div class="form-group row">
 												<label for="inputPw" class="col-sm-4 text-right form-control-label">Confirm Password</label>
 												<div class="input col-sm-8">
-													<input type="text" class="form-control" name="inputPw" id="inputPw" placeholder="Re-enter Password" required="required">
+													<input type="text" class="form-control" name="inputPw" id="inputPw" placeholder="Re-enter Password" required="required" ng-model="newUser.password2">
 												</div>
 											</div>
 											<div class="form-group row">
 												<label for="inputGender" class="col-sm-4 text-right form-control-label">Gender</label>
 												<div class="input col-sm-8">
-												<select class="inputGender form-control  col-sm-8" name="inputGender" id="inputGender"  required="required">
+												<select class="inputGender form-control  col-sm-8" name="inputGender" id="inputGender"  required="required" ng-model="newUser.gender">
 													<option value="" disabled="" selected="">Select Gender</option>
-													<option value="F">Female</option>
-													<option value="M<">Male</option>
+													<option value="male">Male</option>
+													<option value="female">female</option>
 												</select>
 												</div>
 											</div>
 											<div class="form-group row">
 												<label for="inputPhone" class="col-sm-4 text-right form-control-label">Phone</label>
 												<div class="input col-sm-8">
-													<input type="text" class="form-control" name="inputPhone" id="inputPhone" placeholder="Enter Phone" required="required">
+													<input type="text" class="form-control" name="inputPhone" id="inputPhone" placeholder="Enter Phone" required="required" ng-model="newUser.phone_number">
 												</div>
 											</div>
 											<div class="form-group row">
 												<label for="inputStatus" class="col-sm-4 text-right form-control-label">Status</label>
 												<div class="input col-sm-8">
-												<select class="inputStatus form-control  col-sm-8" name="inputStatus" id="inputStatus"  required="required">
+												<select class="inputStatus form-control  col-sm-8" name="inputStatus" id="inputStatus"  required="required" ng-model="newUser.authorized">
 													<option value="" disabled="" selected="">Select Status</option>
-													<option value="Authorized">Authorized</option>
-													<option value="Unauthorized<">Unauthorized</option>
+													<option value="yes">Authorized</option>
+													<option value="no">Unauthorized</option>
 												</select>
-												</div>
-											</div>
-											<div class="form-group row">
-												<label for="inputRegDate" class="col-sm-4 text-right form-control-label">Registration Date</label>
-												<div class="input col-sm-8">
-													<input type="text" class="form-control" name="inputRegDate" id="inputRegDate" placeholder="Enter Registration Date" required="required">
 												</div>
 											</div>
 										</form>
 								  </div>
 								  <div class="modal-footer">
 									<button type="button" class="btn btn-default" data-dismiss="modal">Cancel</button>
-									<button type="button" class="btn btn-primary">Add User</button>
+									<button type="button" class="btn btn-primary" ng-click="add(newUser)" data-dismiss="modal">Add User</button>
 								  </div>
 								</div>
 							  </div>
